@@ -1,0 +1,26 @@
+{
+  "name": "qr-color-by-numbers",
+  "version": "0.0.0",
+  "description": "",
+  "homepage": "https://github.com/michael-braun/qr-color-by-numbers#readme",
+  "bugs": {
+    "url": "https://github.com/michael-braun/qr-color-by-numbers/issues"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/michael-braun/qr-color-by-numbers.git"
+  },
+  "license": "MIT",
+  "author": "Michael Braun",
+  "type": "module",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "dependencies": {
+    "qrcode-svg": "^1.1.0"
+  },
+  "devDependencies": {
+    "@types/qrcode-svg": "^1.1.5"
+  }
+}
