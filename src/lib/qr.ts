@@ -73,6 +73,7 @@ export function generateGridSvg(
     labelColor?: string
     labelFontSize?: number
     padding?: number
+    prefillPercent?: number // 0..100
   }
 ) {
   const {
@@ -83,6 +84,7 @@ export function generateGridSvg(
     labelColor = '#111827',
     labelFontSize = 12,
     padding = 8,
+    prefillPercent = 0,
   } = options || {}
 
   const { modules, size } = getModules(content, ecl)
@@ -134,7 +136,7 @@ export function generateGridSvg(
     }
   }
 
-  // pattern overlay
+  // pattern overlay (actual QR modules)
   if (showPattern) {
     for (let r = 0; r < rows; r++) {
       for (let c = 0; c < cols; c++) {
@@ -142,9 +144,66 @@ export function generateGridSvg(
           const x = labelMarginX + c * cellSize
           const y = labelMarginY + r * cellSize
           // tag the overlay rect so it can be removed safely later
-          parts.push(`<rect class="overlay-module" x="${x}" y="${y}" width="${cellSize}" height="${cellSize}" fill="#000" fill-opacity="0.18" stroke="none"/>`)
+          parts.push(`<rect class="overlay-module overlay-qr" x="${x}" y="${y}" width="${cellSize}" height="${cellSize}" fill="#000" fill-opacity="0.18" stroke="none"/>`)
         }
       }
+    }
+  }
+
+  // prefill a percentage of cells (deterministic per content + ecl)
+  const p = Math.max(0, Math.min(100, Number(prefillPercent) || 0))
+  if (p > 0) {
+    // Only consider black modules for prefill (don't prefill white cells)
+    // Count is percentage of black cells
+    const blackIndices: number[] = []
+    for (let r = 0; r < rows; r++) {
+      for (let c = 0; c < cols; c++) {
+        if (modulesByRow[r][c]) {
+          blackIndices.push(r * cols + c)
+        }
+      }
+    }
+    const blackTotal = blackIndices.length
+    const count = Math.round((blackTotal * p) / 100)
+
+    // deterministic seed from content+ecl
+    function hashStringToSeed(s: string) {
+      let h = 2166136261 >>> 0
+      for (let i = 0; i < s.length; i++) {
+        h ^= s.charCodeAt(i)
+        h = Math.imul(h, 16777619) >>> 0
+      }
+      return h >>> 0
+    }
+
+    const seed = hashStringToSeed(content + '|' + ecl + '|' + String(p))
+    // simple LCG
+    let state = seed >>> 0
+    function rnd() {
+      state = (Math.imul(1664525, state) + 1013904223) >>> 0
+      return state / 0x100000000
+    }
+
+    // shuffle blackIndices with PRNG
+    for (let i = blackIndices.length - 1; i > 0; i--) {
+      const j = Math.floor(rnd() * (i + 1))
+      const tmp = blackIndices[i]
+      blackIndices[i] = blackIndices[j]
+      blackIndices[j] = tmp
+    }
+
+    const chosen = new Set<number>()
+    const take = Math.min(count, blackIndices.length)
+    for (let k = 0; k < take; k++) chosen.add(blackIndices[k])
+
+    // render prefill rects and mark with overlay-prefill so they can be removed
+    for (const idx of chosen) {
+      const r = Math.floor(idx / cols)
+      const c = idx % cols
+      const x = labelMarginX + c * cellSize
+      const y = labelMarginY + r * cellSize
+      // Prefill should be fully black (no transparency)
+      parts.push(`<rect class="overlay-module overlay-prefill" x="${x}" y="${y}" width="${cellSize}" height="${cellSize}" fill="#000" fill-opacity="1" stroke="none"/>`)
     }
   }
 

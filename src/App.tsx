@@ -19,6 +19,7 @@ export default function App() {
   const [showPattern, setShowPattern] = useState<boolean>(false)
   const [strokeColor, setStrokeColor] = useState<string>('#cbd5e1')
   const [labelFontSize, setLabelFontSize] = useState<number>(12)
+  const [prefillPercent, setPrefillPercent] = useState<number>(0)
 
   function stripXmlProlog(s: string) {
     return s.replace(/^\s*<\?xml[\s\S]*?\?>\s*/i, '')
@@ -61,6 +62,7 @@ export default function App() {
         labelColor: '#111827',
         labelFontSize,
         padding: 8,
+        prefillPercent,
       })
       setGridSvgFull(s)
       setGridSvgPreview(stripXmlProlog(s))
@@ -217,6 +219,13 @@ export default function App() {
                 <div>
                   <label className="block text-sm">Label font size</label>
                   <input type="number" value={labelFontSize} onChange={e => setLabelFontSize(Number(e.target.value))} className="w-full p-2 border rounded" />
+                </div>
+                <div>
+                  <label className="block text-sm">Prefill (%)</label>
+                  <div className="flex items-center gap-2">
+                    <input type="range" min={0} max={100} value={prefillPercent} onChange={e => setPrefillPercent(Number(e.target.value))} className="w-full" />
+                    <input type="number" value={prefillPercent} onChange={e => setPrefillPercent(Number(e.target.value))} className="w-20 p-2 border rounded" />
+                  </div>
                 </div>
                 <div className="flex items-center gap-2">
                   <input id="showPattern" type="checkbox" checked={showPattern} onChange={e => setShowPattern(e.target.checked)} />
