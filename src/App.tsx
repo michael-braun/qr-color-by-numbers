@@ -201,7 +201,7 @@ export default function App() {
             <div className="mt-4">
               <h3 className="font-medium">Module ({elements.length})</h3>
               <div className="mt-2 text-sm text-gray-600">
-                {elements.length === 0 ? <em>Keine Module generiert</em> : <pre className="whitespace-pre-wrap break-words">{elements.join('\n')}</pre>}
+                {elements.length === 0 ? <em>Keine Module generiert</em> : <pre className="whitespace-pre-wrap break-words">{elements.join(' ')}</pre>}
               </div>
             </div>
 
