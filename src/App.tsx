@@ -14,9 +14,6 @@ export default function App() {
   const [gridSvgFull, setGridSvgFull] = useState<string>('')
   const [gridSvgPreview, setGridSvgPreview] = useState<string>('')
   const [cellSize, setCellSize] = useState<number>(20)
-  // showPattern steuert, ob die aktiven QR-Module als halbtransparente Füllung
-  // in die Grid-SVG gezeichnet werden. Default: aus (keine Einzeichnung).
-  const [showPattern, setShowPattern] = useState<boolean>(false)
   const [strokeColor, setStrokeColor] = useState<string>('#cbd5e1')
   const [labelFontSize, setLabelFontSize] = useState<number>(12)
   const [prefillPercent, setPrefillPercent] = useState<number>(0)
@@ -58,7 +55,6 @@ export default function App() {
       const s = generateGridSvg(text, {
         ecl,
         cellSize,
-        showPattern,
         strokeColor,
         labelColor: '#111827',
         labelFontSize,
@@ -79,16 +75,6 @@ export default function App() {
       setGridSvgFull('')
       setGridSvgPreview('')
     }
-  }
-
-  // Entfernt die eingezeichneten Module (Overlay) aus dem bereits erzeugten SVG
-  function handleRemoveOverlay() {
-    if (!gridSvgFull) return
-    // Entferne <rect>-Elemente, die die Klasse overlay-module enthalten.
-    // Regex: matcht <rect ... overlay-module ... /> oder ohne self-closing slash.
-    const cleaned = gridSvgFull.replace(/<rect\b[^>]*\boverlay-module\b[^>]*\/?>(?:<\/rect>)?/gi, '')
-    setGridSvgFull(cleaned)
-    setGridSvgPreview(stripXmlProlog(cleaned))
   }
 
   function handleDownloadGridSvg() {
@@ -234,16 +220,11 @@ export default function App() {
                   <input type="number" value={prefillPercent} onChange={e => setPrefillPercent(Number(e.target.value))} className="w-20 p-2 border rounded" />
                 </div>
               </div>
-              <div className="flex items-center gap-2">
-                <input id="showPattern" type="checkbox" checked={showPattern} onChange={e => setShowPattern(e.target.checked)} />
-                <label htmlFor="showPattern" className="text-sm">Overlay: Aktive QR-Module einzeichnen</label>
-              </div>
             </div>
 
             <div className="mt-4 flex gap-2">
               <button onClick={handleGenerateGridSvg} className="bg-green-600 text-white px-3 py-2 rounded">Generiere Grid SVG</button>
               <button onClick={handleDownloadGridSvg} className="bg-gray-800 text-white px-3 py-2 rounded">Download Grid SVG</button>
-              <button onClick={handleRemoveOverlay} className="bg-yellow-500 text-white px-3 py-2 rounded">Overlay entfernen</button>
               <button onClick={handleDownloadGridPng} className="bg-blue-600 text-white px-3 py-2 rounded">Download Grid PNG</button>
               <button onClick={() => { navigator.clipboard?.writeText(elements.join(' ')) }} className="bg-gray-200 px-3 py-2 rounded">Kopiere Modul-Liste</button>
             </div>

@@ -151,32 +151,21 @@ export function generateGridSvg(
     }
   }
 
-  // pattern overlay (actual QR modules)
-  if (showPattern) {
-    for (let r = 0; r < rows; r++) {
-      for (let c = 0; c < cols; c++) {
-        if (modulesByRow[r][c]) {
-          const x = labelMarginX + c * cellSize
-          const y = labelMarginY + r * cellSize
-          // tag the overlay rect so it can be removed safely later
-          parts.push(`<rect class="overlay-module overlay-qr" x="${x}" y="${y}" width="${cellSize}" height="${cellSize}" fill="#000" fill-opacity="0.18" stroke="none"/>`)
-        }
-      }
-    }
-  }
-
-  // prefill a percentage of cells (deterministic per content + ecl)
-  const chosen = computePrefillIndices(modulesByRow, content, ecl, prefillPercent)
-  if (chosen.size > 0) {
-    for (const idx of chosen) {
+  // Render prefilled black cells (visible) based on deterministic selection
+  const prefillChosen = computePrefillIndices(modulesByRow, content, ecl, prefillPercent)
+  if (prefillChosen.size > 0) {
+    for (const idx of prefillChosen) {
       const r = Math.floor(idx / cols)
       const c = idx % cols
       const x = labelMarginX + c * cellSize
       const y = labelMarginY + r * cellSize
-      // Prefill should be fully black (no transparency)
-      parts.push(`<rect class="overlay-module overlay-prefill" x="${x}" y="${y}" width="${cellSize}" height="${cellSize}" fill="#000" fill-opacity="1" stroke="none"/>`)
+      parts.push(`<rect class="prefill-cell" x="${x}" y="${y}" width="${cellSize}" height="${cellSize}" fill="#000" stroke="none"/>`)
     }
   }
+
+  // NOTE: Overlay rendering (visual overlay of QR modules or prefilled cells)
+  // has been removed; this function now only renders the labeled grid (cells and labels).
+  // Prefill remains a logical concept (used by elementsFromContent) but is not drawn here.
 
   parts.push('</svg>')
   return parts.join('\n')
