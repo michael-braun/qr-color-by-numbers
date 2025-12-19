@@ -14,7 +14,9 @@ export default function App() {
   const [gridSvgFull, setGridSvgFull] = useState<string>('')
   const [gridSvgPreview, setGridSvgPreview] = useState<string>('')
   const [cellSize, setCellSize] = useState<number>(20)
-  const [showPattern, setShowPattern] = useState<boolean>(true)
+  // showPattern steuert, ob die aktiven QR-Module als halbtransparente Füllung
+  // in die Grid-SVG gezeichnet werden. Default: aus (keine Einzeichnung).
+  const [showPattern, setShowPattern] = useState<boolean>(false)
   const [strokeColor, setStrokeColor] = useState<string>('#cbd5e1')
   const [labelFontSize, setLabelFontSize] = useState<number>(12)
 
@@ -69,6 +71,16 @@ export default function App() {
     }
   }
 
+  // Entfernt die eingezeichneten Module (Overlay) aus dem bereits erzeugten SVG
+  function handleRemoveOverlay() {
+    if (!gridSvgFull) return
+    // Entferne <rect>-Elemente, die die Klasse overlay-module enthalten.
+    // Regex: matcht <rect ... overlay-module ... /> oder ohne self-closing slash.
+    const cleaned = gridSvgFull.replace(/<rect\b[^>]*\boverlay-module\b[^>]*\/?>(?:<\/rect>)?/gi, '')
+    setGridSvgFull(cleaned)
+    setGridSvgPreview(stripXmlProlog(cleaned))
+  }
+
   function handleDownloadGridSvg() {
     if (!gridSvgFull) return
     const blob = new Blob([gridSvgFull], { type: 'image/svg+xml;charset=utf-8' })
@@ -80,6 +92,63 @@ export default function App() {
     a.click()
     a.remove()
     URL.revokeObjectURL(url)
+  }
+
+  // Rendert das erzeugte Grid-SVG in ein Canvas und lädt ein transparentes PNG herunter.
+  async function handleDownloadGridPng() {
+    if (!gridSvgFull) return
+    try {
+      // Create a Blob and URL for the SVG (more reliable than data: URL)
+      const svgBlob = new Blob([gridSvgFull], { type: 'image/svg+xml;charset=utf-8' })
+      const svgUrl = URL.createObjectURL(svgBlob)
+
+      const img = new Image()
+      img.crossOrigin = 'anonymous'
+      img.src = svgUrl
+
+      await new Promise<void>((resolve, reject) => {
+        img.onload = () => resolve()
+        img.onerror = () => reject(new Error('Failed to load SVG as image'))
+      })
+
+      // Determine size from image (naturalWidth/Height reflect SVG width/height)
+      const width = img.naturalWidth || img.width
+      const height = img.naturalHeight || img.height
+      if (!width || !height) throw new Error('Invalid SVG dimensions')
+
+      // HiDPI support
+      const ratio = Math.max(1, window.devicePixelRatio || 1)
+      const canvas = document.createElement('canvas')
+      canvas.width = Math.round(width * ratio)
+      canvas.height = Math.round(height * ratio)
+      canvas.style.width = `${width}px`
+      canvas.style.height = `${height}px`
+      const ctx = canvas.getContext('2d')
+      if (!ctx) throw new Error('Canvas not supported')
+      ctx.clearRect(0, 0, canvas.width, canvas.height)
+      if (ratio !== 1) ctx.scale(ratio, ratio)
+
+      // draw image; SVG has transparent background already
+      ctx.drawImage(img, 0, 0, width, height)
+
+      // cleanup svg object URL
+      URL.revokeObjectURL(svgUrl)
+
+      // export to blob and trigger download
+      canvas.toBlob((blob) => {
+        if (!blob) return console.error('Failed to create PNG blob')
+        const url = URL.createObjectURL(blob)
+        const a = document.createElement('a')
+        a.href = url
+        a.download = 'qr-grid.png'
+        document.body.appendChild(a)
+        a.click()
+        a.remove()
+        URL.revokeObjectURL(url)
+      }, 'image/png')
+    } catch (err) {
+      console.error('PNG export failed', err)
+    }
   }
 
   return (
@@ -151,13 +220,15 @@ export default function App() {
                 </div>
                 <div className="flex items-center gap-2">
                   <input id="showPattern" type="checkbox" checked={showPattern} onChange={e => setShowPattern(e.target.checked)} />
-                  <label htmlFor="showPattern" className="text-sm">Show current modules</label>
+                  <label htmlFor="showPattern" className="text-sm">Overlay: Aktive QR-Module einzeichnen</label>
                 </div>
               </div>
 
               <div className="mt-4 flex gap-2">
                 <button onClick={handleGenerateGridSvg} className="bg-green-600 text-white px-3 py-2 rounded">Generiere Grid SVG</button>
                 <button onClick={handleDownloadGridSvg} className="bg-gray-800 text-white px-3 py-2 rounded">Download Grid SVG</button>
+                <button onClick={handleRemoveOverlay} className="bg-yellow-500 text-white px-3 py-2 rounded">Overlay entfernen</button>
+                <button onClick={handleDownloadGridPng} className="bg-blue-600 text-white px-3 py-2 rounded">Download Grid PNG</button>
               </div>
 
             </div>

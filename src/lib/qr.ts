@@ -141,7 +141,8 @@ export function generateGridSvg(
         if (modulesByRow[r][c]) {
           const x = labelMarginX + c * cellSize
           const y = labelMarginY + r * cellSize
-          parts.push(`<rect x="${x}" y="${y}" width="${cellSize}" height="${cellSize}" fill="#000" fill-opacity="0.18" stroke="none"/>`)
+          // tag the overlay rect so it can be removed safely later
+          parts.push(`<rect class="overlay-module" x="${x}" y="${y}" width="${cellSize}" height="${cellSize}" fill="#000" fill-opacity="0.18" stroke="none"/>`)
         }
       }
     }
