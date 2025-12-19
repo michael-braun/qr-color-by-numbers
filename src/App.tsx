@@ -212,7 +212,7 @@ export default function App() {
       </main>
 
       <footer className="py-6 text-center text-sm text-gray-500">
-        <div className="max-w-4xl mx-auto px-4">Made with ❤️ & <span title="AI" aria-label="AI">🤖</span> — deployed on GitHub Pages</div>
+        <div className="max-w-4xl mx-auto px-4">Made with ❤️ & <span title="AI" aria-label="AI">🤖</span></div>
       </footer>
     </div>
   )
