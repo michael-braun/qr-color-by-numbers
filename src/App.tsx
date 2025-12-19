@@ -120,16 +120,16 @@ export default function App() {
       <header className="bg-gradient-to-r from-indigo-600 to-purple-600 text-white py-6">
         <div className="max-w-4xl mx-auto px-4">
           <h1 className="text-2xl font-bold">QR Color by Numbers</h1>
-          <p className="text-sm opacity-90">Erzeuge QR-Grids und exportiere die schwarzen Module als Zellenliste.</p>
         </div>
       </header>
 
       <main className="flex-1 max-w-4xl mx-auto px-4 py-8 w-full">
-        <div className="mt-8">
-          <h3 className="text-lg font-semibold mb-4">Grid / Malvorlage</h3>
-          <div className="bg-white rounded-lg shadow p-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-8">
+          {/* Left: Settings / Controls */}
+          <section className="bg-white rounded-lg shadow p-4">
+            <h3 className="text-lg font-semibold mb-4">Einstellungen</h3>
             <label className="block text-sm font-medium mb-2">Text / URL</label>
-            <textarea value={text} onChange={e => setText(e.target.value)} rows={4} className="w-full p-2 border rounded" />
+            <textarea value={text} onChange={e => setText(e.target.value)} rows={4} className="w-full p-2 border rounded mb-4" />
 
             <div className="grid grid-cols-2 gap-4">
               <div>
@@ -153,50 +153,47 @@ export default function App() {
                 <label className="block text-sm">Label font size</label>
                 <input type="number" value={labelFontSize} onChange={e => setLabelFontSize(Number(e.target.value))} className="w-full p-2 border rounded" />
               </div>
-              <div>
+              <div className="col-span-2">
                 <label className="block text-sm">Prefill (%)</label>
                 <div className="flex items-center gap-2">
                   <input type="range" min={0} max={100} value={prefillPercent} onChange={e => setPrefillPercent(Number(e.target.value))} className="w-full" />
-                  <input type="number" value={prefillPercent} onChange={e => setPrefillPercent(Number(e.target.value))} className="w-20 p-2 border rounded" />
+                  <input type="number" value={prefillPercent} onChange={e => setPrefillPercent(Number(e.target.value))} className="w-24 p-2 border rounded" />
                 </div>
               </div>
             </div>
 
-            <div className="mt-4 flex gap-2">
+            <div className="mt-4 flex flex-wrap gap-2">
               <button onClick={handleGenerateGridSvg} className="bg-green-600 text-white px-3 py-2 rounded">Generiere Grid SVG</button>
               <button onClick={handleDownloadGridSvg} className="bg-gray-800 text-white px-3 py-2 rounded">Download Grid SVG</button>
               <button onClick={handleDownloadGridPng} className="bg-blue-600 text-white px-3 py-2 rounded">Download Grid PNG</button>
               <button onClick={() => { navigator.clipboard?.writeText(elements.join(' ')) }} className="bg-gray-200 px-3 py-2 rounded">Kopiere Modul-Liste</button>
             </div>
+          </section>
 
-            <div className="mt-4">
-              <h3 className="font-medium mb-4">Vorschau</h3>
-              <div className="w-full h-full flex items-center justify-center">
-                <div className="w-full">
-                  <h4 className="font-medium mb-2">Grid SVG</h4>
-                  {gridSvgPreview ? (
-                    <div className="overflow-auto border bg-white p-4" dangerouslySetInnerHTML={{ __html: gridSvgPreview }} />
-                  ) : (
-                    <div className="text-gray-400">Noch keine Grid-Vorschau. Klicke auf "Generiere Grid SVG".</div>
-                  )}
-                </div>
-              </div>
+          {/* Right: Preview + Modules */}
+          <section className="bg-white rounded-lg shadow p-4">
+            <h3 className="text-lg font-semibold mb-4">Vorschau</h3>
+            <div className="mb-4">
+              <h4 className="font-medium mb-2">Grid SVG</h4>
+              {gridSvgPreview ? (
+                <div className="overflow-auto border bg-white p-4 rounded" dangerouslySetInnerHTML={{ __html: gridSvgPreview }} />
+              ) : (
+                <div className="text-gray-400">Noch keine Grid-Vorschau. Klicke auf "Generiere Grid SVG".</div>
+              )}
             </div>
 
-            {/* Modules: show modules list under Grid/Malvorlage (updated when grid is generated) */}
-            <div className="mt-4">
-              <h3 className="font-medium">Module ({elements.length})</h3>
-              <div className="mt-2 text-sm text-gray-600">
+            <div>
+              <h4 className="font-medium mb-2">Module ({elements.length})</h4>
+              <div className="text-sm text-gray-600">
                 {elements.length === 0 ? <em>Keine Module generiert</em> : <pre className="whitespace-pre-wrap break-words">{elements.join(' ')}</pre>}
               </div>
             </div>
-
-          </div>
+          </section>
         </div>
       </main>
 
       <footer className="py-6 text-center text-sm text-gray-500">
-        <div className="max-w-4xl mx-auto px-4">Made with ❤️ — deployed on GitHub Pages</div>
+        <div className="max-w-4xl mx-auto px-4">Made with ❤️ & 🤖 — deployed on GitHub Pages</div>
       </footer>
     </div>
   )
