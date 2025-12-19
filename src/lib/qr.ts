@@ -54,3 +54,99 @@ export function elementsFromContent(content: string, ecl: string = 'L') {
   }
   return elements
 }
+
+export function getModules(content: string, ecl: string = 'L') {
+  const qr = new QRCode({ content, ecl })
+  // @ts-ignore
+  const modules: boolean[][] = qr.qrcode.modules
+  const size = modules.length
+  return { modules, size }
+}
+
+export function generateGridSvg(
+  content: string,
+  options?: {
+    ecl?: string
+    cellSize?: number
+    showPattern?: boolean
+    strokeColor?: string
+    labelColor?: string
+    labelFontSize?: number
+    padding?: number
+  }
+) {
+  const {
+    ecl = 'L',
+    cellSize = 20,
+    showPattern = true,
+    strokeColor = '#cbd5e1',
+    labelColor = '#111827',
+    labelFontSize = 12,
+    padding = 8,
+  } = options || {}
+
+  const { modules, size } = getModules(content, ecl)
+  const cols = size
+  const rows = size
+
+  // normalize modules to modulesByRow[r][c]
+  const modulesByRow: boolean[][] = Array.from({ length: rows }, (_, r) =>
+    Array.from({ length: cols }, (_, c) => !!(modules[c] && modules[c][r]))
+  )
+
+  const colNames = generateColumnNames(cols)
+
+  const labelMarginX = Math.max(40, Math.ceil(labelFontSize * 2.5))
+  const labelMarginY = Math.max(24, Math.ceil(labelFontSize * 1.8))
+
+  const width = labelMarginX + cols * cellSize + padding
+  const height = labelMarginY + rows * cellSize + padding
+
+  const parts: string[] = []
+  parts.push('<?xml version="1.0" encoding="UTF-8"?>')
+  parts.push(`\n<svg xmlns="http://www.w3.org/2000/svg" width="${width}" height="${height}" viewBox="0 0 ${width} ${height}" fill="none">`)
+  parts.push(`<rect width="${width}" height="${height}" fill="transparent"/>`)
+
+  // column labels
+  for (let c = 0; c < cols; c++) {
+    const x = labelMarginX + c * cellSize + cellSize / 2
+    const y = Math.ceil(labelFontSize / 2)
+    parts.push(
+      `<text x="${x}" y="${y}" font-family="sans-serif" font-size="${labelFontSize}" fill="${labelColor}" text-anchor="middle" dominant-baseline="hanging">${colNames[c]}</text>`
+    )
+  }
+
+  // row labels
+  for (let r = 0; r < rows; r++) {
+    const x = Math.round(labelMarginX - 6)
+    const y = labelMarginY + r * cellSize + cellSize / 2
+    parts.push(
+      `<text x="${x}" y="${y}" font-family="sans-serif" font-size="${labelFontSize}" fill="${labelColor}" text-anchor="end" dominant-baseline="middle">${r + 1}</text>`
+    )
+  }
+
+  // grid cells (outlines)
+  for (let r = 0; r < rows; r++) {
+    for (let c = 0; c < cols; c++) {
+      const x = labelMarginX + c * cellSize
+      const y = labelMarginY + r * cellSize
+      parts.push(`<rect x="${x}" y="${y}" width="${cellSize}" height="${cellSize}" fill="transparent" stroke="${strokeColor}" stroke-width="1" />`)
+    }
+  }
+
+  // pattern overlay
+  if (showPattern) {
+    for (let r = 0; r < rows; r++) {
+      for (let c = 0; c < cols; c++) {
+        if (modulesByRow[r][c]) {
+          const x = labelMarginX + c * cellSize
+          const y = labelMarginY + r * cellSize
+          parts.push(`<rect x="${x}" y="${y}" width="${cellSize}" height="${cellSize}" fill="#000" fill-opacity="0.18" stroke="none"/>`)
+        }
+      }
+    }
+  }
+
+  parts.push('</svg>')
+  return parts.join('\n')
+}
