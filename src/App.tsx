@@ -1,8 +1,8 @@
-import React, { useState } from 'react'
+import React, { useState, useEffect, useRef } from 'react'
 import { elementsFromContent, generateGridSvg } from './lib/qr'
 
 export default function App() {
-  const [text, setText] = useState('Hallo Sebastian!')
+  const [text, setText] = useState('Hello World!')
   const [ecl, setEcl] = useState<'L' | 'M' | 'Q' | 'H'>('L')
   const [elements, setElements] = useState<string[]>([])
 
@@ -13,6 +13,25 @@ export default function App() {
   const [strokeColor, setStrokeColor] = useState<string>('#cbd5e1')
   const [labelFontSize, setLabelFontSize] = useState<number>(12)
   const [prefillPercent, setPrefillPercent] = useState<number>(0)
+
+  // Auto-generation: when any of these settings change, regenerate the grid after a short debounce.
+  const _autoGenFirst = useRef(true)
+  useEffect(() => {
+    // skip the very first render
+    if (_autoGenFirst.current) {
+      _autoGenFirst.current = false
+      return
+    }
+    const id = setTimeout(() => {
+      try {
+        handleGenerateGridSvg()
+      } catch (e) {
+        console.error('Auto-generate grid failed', e)
+      }
+    }, 350)
+    return () => clearTimeout(id)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [text, ecl, cellSize, strokeColor, labelFontSize, prefillPercent])
 
   function stripXmlProlog(s: string) {
     return s.replace(/^\s*<\?xml[\s\S]*?\?>\s*/i, '')
