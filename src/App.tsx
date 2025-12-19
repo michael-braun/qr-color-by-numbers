@@ -159,9 +159,6 @@ export default function App() {
       <main className="flex-1 max-w-4xl mx-auto px-4 py-8 w-full">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <section className="bg-white rounded-lg shadow p-4">
-            <label className="block text-sm font-medium mb-2">Text / URL</label>
-            <textarea value={text} onChange={e => setText(e.target.value)} rows={4} className="w-full p-2 border rounded" />
-
             <div className="mt-4 grid grid-cols-2 gap-2">
               <div>
                 <label className="block text-sm">Foreground</label>
@@ -170,16 +167,6 @@ export default function App() {
               <div>
                 <label className="block text-sm">Background</label>
                 <input type="color" value={bg} onChange={e => setBg(e.target.value)} className="w-full h-10 p-1 border rounded" />
-              </div>
-
-              <div>
-                <label className="block text-sm">Error Correction (ECL)</label>
-                <select value={ecl} onChange={e => setEcl(e.target.value as 'L' | 'M' | 'Q' | 'H')} className="w-full p-2 border rounded">
-                  <option value="L">L (7%)</option>
-                  <option value="M">M (15%)</option>
-                  <option value="Q">Q (25%)</option>
-                  <option value="H">H (30%)</option>
-                </select>
               </div>
 
               <div className="flex items-end">
@@ -200,7 +187,19 @@ export default function App() {
         <div className="mt-8">
           <h3 className="text-lg font-semibold mb-4">Grid / Malvorlage</h3>
           <div className="bg-white rounded-lg shadow p-4">
+            <label className="block text-sm font-medium mb-2">Text / URL</label>
+            <textarea value={text} onChange={e => setText(e.target.value)} rows={4} className="w-full p-2 border rounded" />
+
             <div className="grid grid-cols-2 gap-4">
+              <div>
+                <label className="block text-sm">Error Correction (ECL)</label>
+                <select value={ecl} onChange={e => setEcl(e.target.value as 'L' | 'M' | 'Q' | 'H')} className="w-full p-2 border rounded">
+                  <option value="L">L (7%)</option>
+                  <option value="M">M (15%)</option>
+                  <option value="Q">Q (25%)</option>
+                  <option value="H">H (30%)</option>
+                </select>
+              </div>
               <div>
                 <label className="block text-sm">Cell size (px)</label>
                 <input type="number" value={cellSize} onChange={e => setCellSize(Number(e.target.value))} className="w-full p-2 border rounded" />
