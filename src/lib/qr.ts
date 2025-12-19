@@ -39,17 +39,72 @@ export function generateQrSvg(content: string, ecl: string = 'L', size = 256, fi
   return svg
 }
 
-export function elementsFromContent(content: string, ecl: string = 'L') {
+export function elementsFromContent(content: string, ecl: string = 'L', prefillPercent: number = 0) {
   const qr = new QRCode({ content, ecl })
   // @ts-ignore
   const modules = qr.qrcode.modules
   const length = modules.length
+
+  // normalize modules into modulesByRow[r][c]
+  const modulesByRow: boolean[][] = Array.from({ length }, (_, r) =>
+    Array.from({ length }, (_, c) => !!(modules[c] && modules[c][r]))
+  )
+
   const columnNames = generateColumnNames(length)
+
+  // If prefillPercent>0, compute deterministic chosen black indices (same logic as generateGridSvg)
+  const p = Math.max(0, Math.min(100, Number(prefillPercent) || 0))
+  const chosenSet = new Set<number>()
+  if (p > 0) {
+    // collect black indices
+    const blackIndices: number[] = []
+    for (let r = 0; r < length; r++) {
+      for (let c = 0; c < length; c++) {
+        if (modulesByRow[r][c]) blackIndices.push(r * length + c)
+      }
+    }
+
+    const blackTotal = blackIndices.length
+    const count = Math.round((blackTotal * p) / 100)
+
+    function hashStringToSeed(s: string) {
+      let h = 2166136261 >>> 0
+      for (let i = 0; i < s.length; i++) {
+        h ^= s.charCodeAt(i)
+        h = Math.imul(h, 16777619) >>> 0
+      }
+      return h >>> 0
+    }
+
+    const seed = hashStringToSeed(content + '|' + ecl + '|' + String(p))
+    let state = seed >>> 0
+    function rnd() {
+      state = (Math.imul(1664525, state) + 1013904223) >>> 0
+      return state / 0x100000000
+    }
+
+    // shuffle blackIndices
+    for (let i = blackIndices.length - 1; i > 0; i--) {
+      const j = Math.floor(rnd() * (i + 1))
+      const tmp = blackIndices[i]
+      blackIndices[i] = blackIndices[j]
+      blackIndices[j] = tmp
+    }
+
+    const take = Math.min(count, blackIndices.length)
+    for (let k = 0; k < take; k++) chosenSet.add(blackIndices[k])
+  }
+
   const elements: string[] = []
-  for (let y = 0; y < length; y++) {
-    for (let x = 0; x < length; x++) {
-      const module = modules[x][y]
-      if (module) elements.push(`${columnNames[x]}${y + 1}`)
+  for (let r = 0; r < length; r++) {
+    for (let c = 0; c < length; c++) {
+      const module = modulesByRow[r][c]
+      const idx = r * length + c
+      if (module) {
+        // skip if this black cell was selected as prefill
+        if (chosenSet.has(idx)) continue
+        elements.push(`${columnNames[c]}${r + 1}`)
+      }
     }
   }
   return elements

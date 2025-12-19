@@ -30,7 +30,8 @@ export default function App() {
       const s = generateQrSvg(text, ecl, 256, fg, bg)
       setSvgFull(s)
       setSvgPreview(stripXmlProlog(s))
-      setElements(elementsFromContent(text, ecl))
+      // Pass prefillPercent so prefilled black modules are excluded from the returned list
+      setElements(elementsFromContent(text, ecl, prefillPercent))
     } catch (e) {
       console.error(e)
       setSvgFull('')
