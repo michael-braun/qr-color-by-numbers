@@ -2,7 +2,7 @@
   "name": "qr-color-by-numbers",
   "version": "0.0.0",
   "description": "",
-  "homepage": "https://github.com/michael-braun/qr-color-by-numbers#readme",
+  "homepage": "https://michael-braun.github.io/qr-color-by-numbers/",
   "bugs": {
     "url": "https://github.com/michael-braun/qr-color-by-numbers/issues"
   },
@@ -15,12 +15,29 @@
   "type": "module",
   "main": "index.js",
   "scripts": {
+    "dev": "vite",
+    "start": "vite",
+    "build": "vite build",
+    "preview": "vite preview --port 4173",
+    "predeploy": "npm run build",
+    "deploy": "gh-pages -d dist",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "dependencies": {
-    "qrcode-svg": "^1.1.0"
+    "qrcode-svg": "^1.1.0",
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0"
   },
   "devDependencies": {
-    "@types/qrcode-svg": "^1.1.5"
+    "@types/qrcode-svg": "^1.1.5",
+    "@types/react": "^18.2.8",
+    "@types/react-dom": "^18.2.4",
+    "@vitejs/plugin-react": "^5.0.0",
+    "autoprefixer": "^10.4.14",
+    "gh-pages": "^5.0.0",
+    "postcss": "^8.4.23",
+    "tailwindcss": "^3.4.7",
+    "typescript": "^5.6.0",
+    "vite": "^5.1.0"
   }
 }
