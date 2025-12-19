@@ -67,6 +67,13 @@ export default function App() {
       })
       setGridSvgFull(s)
       setGridSvgPreview(stripXmlProlog(s))
+      // Generate the module list together with the grid so it appears under Grid/Malvorlage
+      try {
+        const elems = elementsFromContent(text, ecl, prefillPercent)
+        setElements(elems)
+      } catch (e) {
+        console.error('Failed to compute module list for grid:', e)
+      }
     } catch (err) {
       console.error(err)
       setGridSvgFull('')
@@ -196,9 +203,66 @@ export default function App() {
 
             <div className="mt-4 flex gap-2">
               <button onClick={handleDownload} className="bg-gray-800 text-white px-3 py-2 rounded">Download SVG</button>
+            </div>
+
+            <h4 className="font-medium mb-2">QR SVG</h4>
+            <div className="p-4 bg-white rounded mb-4" dangerouslySetInnerHTML={{ __html: svgPreview || '<em class="text-gray-400">Noch keine Vorschau</em>' }} />
+
+          </section>
+        </div>
+
+        <div className="mt-8">
+          <h3 className="text-lg font-semibold mb-4">Grid / Malvorlage</h3>
+          <div className="bg-white rounded-lg shadow p-4">
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <label className="block text-sm">Cell size (px)</label>
+                <input type="number" value={cellSize} onChange={e => setCellSize(Number(e.target.value))} className="w-full p-2 border rounded" />
+              </div>
+              <div>
+                <label className="block text-sm">Stroke Color</label>
+                <input type="color" value={strokeColor} onChange={e => setStrokeColor(e.target.value)} className="w-full h-10 p-1 border rounded" />
+              </div>
+              <div>
+                <label className="block text-sm">Label font size</label>
+                <input type="number" value={labelFontSize} onChange={e => setLabelFontSize(Number(e.target.value))} className="w-full p-2 border rounded" />
+              </div>
+              <div>
+                <label className="block text-sm">Prefill (%)</label>
+                <div className="flex items-center gap-2">
+                  <input type="range" min={0} max={100} value={prefillPercent} onChange={e => setPrefillPercent(Number(e.target.value))} className="w-full" />
+                  <input type="number" value={prefillPercent} onChange={e => setPrefillPercent(Number(e.target.value))} className="w-20 p-2 border rounded" />
+                </div>
+              </div>
+              <div className="flex items-center gap-2">
+                <input id="showPattern" type="checkbox" checked={showPattern} onChange={e => setShowPattern(e.target.checked)} />
+                <label htmlFor="showPattern" className="text-sm">Overlay: Aktive QR-Module einzeichnen</label>
+              </div>
+            </div>
+
+            <div className="mt-4 flex gap-2">
+              <button onClick={handleGenerateGridSvg} className="bg-green-600 text-white px-3 py-2 rounded">Generiere Grid SVG</button>
+              <button onClick={handleDownloadGridSvg} className="bg-gray-800 text-white px-3 py-2 rounded">Download Grid SVG</button>
+              <button onClick={handleRemoveOverlay} className="bg-yellow-500 text-white px-3 py-2 rounded">Overlay entfernen</button>
+              <button onClick={handleDownloadGridPng} className="bg-blue-600 text-white px-3 py-2 rounded">Download Grid PNG</button>
               <button onClick={() => { navigator.clipboard?.writeText(elements.join(' ')) }} className="bg-gray-200 px-3 py-2 rounded">Kopiere Modul-Liste</button>
             </div>
 
+            <div className="mt-4">
+              <h3 className="font-medium mb-4">Vorschau</h3>
+              <div className="w-full h-full flex items-center justify-center">
+                <div className="w-full">
+                  <h4 className="font-medium mb-2">Grid SVG</h4>
+                  {gridSvgPreview ? (
+                    <div className="overflow-auto border bg-white p-4" dangerouslySetInnerHTML={{ __html: gridSvgPreview }} />
+                  ) : (
+                    <div className="text-gray-400">Noch keine Grid-Vorschau. Klicke auf "Generiere Grid SVG".</div>
+                  )}
+                </div>
+              </div>
+            </div>
+
+            {/* Modules: show modules list under Grid/Malvorlage (updated when grid is generated) */}
             <div className="mt-4">
               <h3 className="font-medium">Module ({elements.length})</h3>
               <div className="mt-2 text-sm text-gray-600">
@@ -206,61 +270,7 @@ export default function App() {
               </div>
             </div>
 
-            <div className="mt-6 border-t pt-4">
-              <h3 className="font-medium mb-2">Grid / Malvorlage</h3>
-              <div className="grid grid-cols-2 gap-2">
-                <div>
-                  <label className="block text-sm">Cell size (px)</label>
-                  <input type="number" value={cellSize} onChange={e => setCellSize(Number(e.target.value))} className="w-full p-2 border rounded" />
-                </div>
-                <div>
-                  <label className="block text-sm">Stroke Color</label>
-                  <input type="color" value={strokeColor} onChange={e => setStrokeColor(e.target.value)} className="w-full h-10 p-1 border rounded" />
-                </div>
-                <div>
-                  <label className="block text-sm">Label font size</label>
-                  <input type="number" value={labelFontSize} onChange={e => setLabelFontSize(Number(e.target.value))} className="w-full p-2 border rounded" />
-                </div>
-                <div>
-                  <label className="block text-sm">Prefill (%)</label>
-                  <div className="flex items-center gap-2">
-                    <input type="range" min={0} max={100} value={prefillPercent} onChange={e => setPrefillPercent(Number(e.target.value))} className="w-full" />
-                    <input type="number" value={prefillPercent} onChange={e => setPrefillPercent(Number(e.target.value))} className="w-20 p-2 border rounded" />
-                  </div>
-                </div>
-                <div className="flex items-center gap-2">
-                  <input id="showPattern" type="checkbox" checked={showPattern} onChange={e => setShowPattern(e.target.checked)} />
-                  <label htmlFor="showPattern" className="text-sm">Overlay: Aktive QR-Module einzeichnen</label>
-                </div>
-              </div>
-
-              <div className="mt-4 flex gap-2">
-                <button onClick={handleGenerateGridSvg} className="bg-green-600 text-white px-3 py-2 rounded">Generiere Grid SVG</button>
-                <button onClick={handleDownloadGridSvg} className="bg-gray-800 text-white px-3 py-2 rounded">Download Grid SVG</button>
-                <button onClick={handleRemoveOverlay} className="bg-yellow-500 text-white px-3 py-2 rounded">Overlay entfernen</button>
-                <button onClick={handleDownloadGridPng} className="bg-blue-600 text-white px-3 py-2 rounded">Download Grid PNG</button>
-              </div>
-
-            </div>
-
-          </section>
-
-          <section className="bg-white rounded-lg shadow p-4 flex flex-col items-center">
-            <h3 className="font-medium mb-4">Vorschau</h3>
-            <div className="w-full h-full flex items-center justify-center">
-              <div className="w-full">
-                <h4 className="font-medium mb-2">QR SVG</h4>
-                <div className="p-4 bg-white rounded mb-4" dangerouslySetInnerHTML={{ __html: svgPreview || '<em class="text-gray-400">Noch keine Vorschau</em>' }} />
-
-                <h4 className="font-medium mb-2">Grid SVG</h4>
-                {gridSvgPreview ? (
-                  <div className="overflow-auto border bg-white p-4" dangerouslySetInnerHTML={{ __html: gridSvgPreview }} />
-                ) : (
-                  <div className="text-gray-400">Noch keine Grid-Vorschau. Klicke auf "Generiere Grid SVG".</div>
-                )}
-              </div>
-            </div>
-          </section>
+          </div>
         </div>
       </main>
 
