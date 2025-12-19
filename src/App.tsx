@@ -1,13 +1,9 @@
 import React, { useState } from 'react'
-import { generateQrSvg, elementsFromContent, generateGridSvg } from './lib/qr'
+import { elementsFromContent, generateGridSvg } from './lib/qr'
 
 export default function App() {
   const [text, setText] = useState('Hallo Sebastian!')
-  const [fg, setFg] = useState('#111827')
-  const [bg, setBg] = useState('#ffffff')
   const [ecl, setEcl] = useState<'L' | 'M' | 'Q' | 'H'>('L')
-  const [svgFull, setSvgFull] = useState('')
-  const [svgPreview, setSvgPreview] = useState('')
   const [elements, setElements] = useState<string[]>([])
 
   // Grid states
@@ -20,34 +16,6 @@ export default function App() {
 
   function stripXmlProlog(s: string) {
     return s.replace(/^\s*<\?xml[\s\S]*?\?>\s*/i, '')
-  }
-
-  function handleGenerate() {
-    try {
-      const s = generateQrSvg(text, ecl, 256, fg, bg)
-      setSvgFull(s)
-      setSvgPreview(stripXmlProlog(s))
-      // Pass prefillPercent so prefilled black modules are excluded from the returned list
-      setElements(elementsFromContent(text, ecl, prefillPercent))
-    } catch (e) {
-      console.error(e)
-      setSvgFull('')
-      setSvgPreview('')
-      setElements([])
-    }
-  }
-
-  function handleDownload() {
-    if (!svgFull) return
-    const blob = new Blob([svgFull], { type: 'image/svg+xml' })
-    const url = URL.createObjectURL(blob)
-    const a = document.createElement('a')
-    a.href = url
-    a.download = 'qr.svg'
-    document.body.appendChild(a)
-    a.click()
-    a.remove()
-    URL.revokeObjectURL(url)
   }
 
   function handleGenerateGridSvg() {
@@ -152,38 +120,11 @@ export default function App() {
       <header className="bg-gradient-to-r from-indigo-600 to-purple-600 text-white py-6">
         <div className="max-w-4xl mx-auto px-4">
           <h1 className="text-2xl font-bold">QR Color by Numbers</h1>
-          <p className="text-sm opacity-90">Erzeuge QR-Codes und exportiere die schwarzen Module als Zellenliste.</p>
+          <p className="text-sm opacity-90">Erzeuge QR-Grids und exportiere die schwarzen Module als Zellenliste.</p>
         </div>
       </header>
 
       <main className="flex-1 max-w-4xl mx-auto px-4 py-8 w-full">
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          <section className="bg-white rounded-lg shadow p-4">
-            <div className="mt-4 grid grid-cols-2 gap-2">
-              <div>
-                <label className="block text-sm">Foreground</label>
-                <input type="color" value={fg} onChange={e => setFg(e.target.value)} className="w-full h-10 p-1 border rounded" />
-              </div>
-              <div>
-                <label className="block text-sm">Background</label>
-                <input type="color" value={bg} onChange={e => setBg(e.target.value)} className="w-full h-10 p-1 border rounded" />
-              </div>
-
-              <div className="flex items-end">
-                <button onClick={handleGenerate} className="w-full bg-indigo-600 text-white px-4 py-2 rounded">Generieren</button>
-              </div>
-            </div>
-
-            <div className="mt-4 flex gap-2">
-              <button onClick={handleDownload} className="bg-gray-800 text-white px-3 py-2 rounded">Download SVG</button>
-            </div>
-
-            <h4 className="font-medium mb-2">QR SVG</h4>
-            <div className="p-4 bg-white rounded mb-4" dangerouslySetInnerHTML={{ __html: svgPreview || '<em class="text-gray-400">Noch keine Vorschau</em>' }} />
-
-          </section>
-        </div>
-
         <div className="mt-8">
           <h3 className="text-lg font-semibold mb-4">Grid / Malvorlage</h3>
           <div className="bg-white rounded-lg shadow p-4">

@@ -24,20 +24,7 @@ export function generateColumnNames(length: number, oneBased = false): string[] 
   return names
 }
 
-// ecl: 'L' | 'M' | 'Q' | 'H'
-export function generateQrSvg(content: string, ecl: string = 'L', size = 256, fill = '#000000', background = '#ffffff') {
-  const qr = new QRCode({
-    content,
-    ecl,
-    padding: 0,
-    width: size,
-    color: fill,
-    background: background,
-  })
-  // @ts-ignore
-  const svg = qr.svg() || ''
-  return svg
-}
+// Removed the generateQrSvg function as QR SVG generation is no longer needed in the app.
 
 export function elementsFromContent(content: string, ecl: string = 'L', prefillPercent: number = 0) {
   const qr = new QRCode({ content, ecl })
@@ -83,7 +70,6 @@ export function generateGridSvg(
   options?: {
     ecl?: string
     cellSize?: number
-    showPattern?: boolean
     strokeColor?: string
     labelColor?: string
     labelFontSize?: number
@@ -94,7 +80,6 @@ export function generateGridSvg(
   const {
     ecl = 'L',
     cellSize = 20,
-    showPattern = true,
     strokeColor = '#cbd5e1',
     labelColor = '#111827',
     labelFontSize = 12,
