@@ -52,48 +52,8 @@ export function elementsFromContent(content: string, ecl: string = 'L', prefillP
 
   const columnNames = generateColumnNames(length)
 
-  // If prefillPercent>0, compute deterministic chosen black indices (same logic as generateGridSvg)
-  const p = Math.max(0, Math.min(100, Number(prefillPercent) || 0))
-  const chosenSet = new Set<number>()
-  if (p > 0) {
-    // collect black indices
-    const blackIndices: number[] = []
-    for (let r = 0; r < length; r++) {
-      for (let c = 0; c < length; c++) {
-        if (modulesByRow[r][c]) blackIndices.push(r * length + c)
-      }
-    }
-
-    const blackTotal = blackIndices.length
-    const count = Math.round((blackTotal * p) / 100)
-
-    function hashStringToSeed(s: string) {
-      let h = 2166136261 >>> 0
-      for (let i = 0; i < s.length; i++) {
-        h ^= s.charCodeAt(i)
-        h = Math.imul(h, 16777619) >>> 0
-      }
-      return h >>> 0
-    }
-
-    const seed = hashStringToSeed(content + '|' + ecl + '|' + String(p))
-    let state = seed >>> 0
-    function rnd() {
-      state = (Math.imul(1664525, state) + 1013904223) >>> 0
-      return state / 0x100000000
-    }
-
-    // shuffle blackIndices
-    for (let i = blackIndices.length - 1; i > 0; i--) {
-      const j = Math.floor(rnd() * (i + 1))
-      const tmp = blackIndices[i]
-      blackIndices[i] = blackIndices[j]
-      blackIndices[j] = tmp
-    }
-
-    const take = Math.min(count, blackIndices.length)
-    for (let k = 0; k < take; k++) chosenSet.add(blackIndices[k])
-  }
+  // If prefillPercent>0, compute deterministic chosen black indices using helper
+  const chosenSet = computePrefillIndices(modulesByRow, content, ecl, prefillPercent)
 
   const elements: string[] = []
   for (let r = 0; r < length; r++) {
@@ -206,52 +166,8 @@ export function generateGridSvg(
   }
 
   // prefill a percentage of cells (deterministic per content + ecl)
-  const p = Math.max(0, Math.min(100, Number(prefillPercent) || 0))
-  if (p > 0) {
-    // Only consider black modules for prefill (don't prefill white cells)
-    // Count is percentage of black cells
-    const blackIndices: number[] = []
-    for (let r = 0; r < rows; r++) {
-      for (let c = 0; c < cols; c++) {
-        if (modulesByRow[r][c]) {
-          blackIndices.push(r * cols + c)
-        }
-      }
-    }
-    const blackTotal = blackIndices.length
-    const count = Math.round((blackTotal * p) / 100)
-
-    // deterministic seed from content+ecl
-    function hashStringToSeed(s: string) {
-      let h = 2166136261 >>> 0
-      for (let i = 0; i < s.length; i++) {
-        h ^= s.charCodeAt(i)
-        h = Math.imul(h, 16777619) >>> 0
-      }
-      return h >>> 0
-    }
-
-    const seed = hashStringToSeed(content + '|' + ecl + '|' + String(p))
-    // simple LCG
-    let state = seed >>> 0
-    function rnd() {
-      state = (Math.imul(1664525, state) + 1013904223) >>> 0
-      return state / 0x100000000
-    }
-
-    // shuffle blackIndices with PRNG
-    for (let i = blackIndices.length - 1; i > 0; i--) {
-      const j = Math.floor(rnd() * (i + 1))
-      const tmp = blackIndices[i]
-      blackIndices[i] = blackIndices[j]
-      blackIndices[j] = tmp
-    }
-
-    const chosen = new Set<number>()
-    const take = Math.min(count, blackIndices.length)
-    for (let k = 0; k < take; k++) chosen.add(blackIndices[k])
-
-    // render prefill rects and mark with overlay-prefill so they can be removed
+  const chosen = computePrefillIndices(modulesByRow, content, ecl, prefillPercent)
+  if (chosen.size > 0) {
     for (const idx of chosen) {
       const r = Math.floor(idx / cols)
       const c = idx % cols
@@ -264,4 +180,61 @@ export function generateGridSvg(
 
   parts.push('</svg>')
   return parts.join('\n')
+}
+
+// Compute deterministic prefill indices (flattened indices r*cols + c) from modulesByRow.
+export function computePrefillIndices(
+  modulesByRow: boolean[][],
+  content: string,
+  ecl: string,
+  prefillPercent: number
+): Set<number> {
+  const p = Math.max(0, Math.min(100, Number(prefillPercent) || 0))
+  const chosen = new Set<number>()
+  if (p <= 0) return chosen
+
+  const rows = modulesByRow.length
+  const cols = rows > 0 ? modulesByRow[0].length : 0
+
+  // collect black indices
+  const blackIndices: number[] = []
+  for (let r = 0; r < rows; r++) {
+    for (let c = 0; c < cols; c++) {
+      if (modulesByRow[r][c]) blackIndices.push(r * cols + c)
+    }
+  }
+
+  if (blackIndices.length === 0) return chosen
+
+  const blackTotal = blackIndices.length
+  const count = Math.round((blackTotal * p) / 100)
+  if (count <= 0) return chosen
+
+  function hashStringToSeed(s: string) {
+    let h = 2166136261 >>> 0
+    for (let i = 0; i < s.length; i++) {
+      h ^= s.charCodeAt(i)
+      h = Math.imul(h, 16777619) >>> 0
+    }
+    return h >>> 0
+  }
+
+  const seed = hashStringToSeed(content + '|' + ecl + '|' + String(p))
+  let state = seed >>> 0
+  function rnd() {
+    state = (Math.imul(1664525, state) + 1013904223) >>> 0
+    return state / 0x100000000
+  }
+
+  // shuffle blackIndices with PRNG
+  for (let i = blackIndices.length - 1; i > 0; i--) {
+    const j = Math.floor(rnd() * (i + 1))
+    const tmp = blackIndices[i]
+    blackIndices[i] = blackIndices[j]
+    blackIndices[j] = tmp
+  }
+
+  const take = Math.min(count, blackIndices.length)
+  for (let k = 0; k < take; k++) chosen.add(blackIndices[k])
+  return chosen
 }
